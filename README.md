@@ -26,3 +26,8 @@ pip install --upgrade pip
 pip install -r requirements.txt
 python x.py
 ```
+
+## References
+
+- https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/dynamodb.html
+- https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBLocal.html

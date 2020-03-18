@@ -22,9 +22,9 @@ try:
             'WriteCapacityUnits': 123
         }
     )
-    pp(response)
+    pp(response['TableDescription'])
 except client.exceptions.ResourceInUseException as error:
-    pass
+    pp(error)
 
 client.get_waiter('table_exists').wait(TableName='test')
 
@@ -37,13 +37,14 @@ response = client.put_item(
     },
     ReturnConsumedCapacity='TOTAL'
 )
-pp(response)
+pp(response['ConsumedCapacity'])
 
 response = client.list_tables()
-pp(response)
+pp(response['TableNames'])
 
 response = client.scan(
     TableName='test',
     ReturnConsumedCapacity='TOTAL'
 )
-pp(response)
+pp({k:v for k,v in response.items() if k in ['ConsumedCapacity','Items']})
+
