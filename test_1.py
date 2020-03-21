@@ -1,10 +1,11 @@
 import boto3
 from pprint import pprint as pp
-from helper import slice_dict
+from boto3_helper import DynamoDBClient
+from config import config
 
 client = boto3.client(
     'dynamodb',
-    endpoint_url='http://localhost:8000'
+    endpoint_url=config['endpoint_url']
 )
 
 try:
@@ -43,7 +44,7 @@ response = client.scan(
     TableName='test_1',
     ReturnConsumedCapacity='TOTAL'
 )
-pp(slice_dict(response.items(), ['ConsumedCapacity', 'Items']))
+pp(DynamoDBClient.slice(response.items(), ['ConsumedCapacity', 'Items']))
 
 response = client.query(
     TableName='test_1',
@@ -58,4 +59,4 @@ response = client.query(
     }
 )
 
-pp(slice_dict(response.items(), ['ConsumedCapacity', 'Items']))
+pp(DynamoDBClient.slice(response.items(), ['ConsumedCapacity', 'Items']))

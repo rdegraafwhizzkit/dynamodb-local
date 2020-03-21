@@ -16,6 +16,10 @@ class DynamoDBClient:
     def __init__(self, client):
         self.client = client
 
+    @staticmethod
+    def slice(dictionary: dict, keys: list):
+        return {k: v for k, v in dictionary if k in keys}
+
     def table_exists(self, TableName):
         for page in self.client.get_paginator('list_tables').paginate():
             if TableName in page['TableNames']:
@@ -41,3 +45,21 @@ class DynamoDBClient:
         response = self.client.create_table(**kwargs)
         self.client.get_waiter('table_exists').wait(TableName=kwargs['TableName'])
         return response
+
+    def put_item(self, **kwargs):
+        exists_ok = kwargs.pop('ExistsOK', False)
+        try:
+            self.client.put_item(**kwargs)
+        except self.client.exceptions.ConditionalCheckFailedException as e:
+            if not exists_ok:
+                raise e
+
+    def query(self, **kwargs):
+        fields = kwargs.pop('Fields', None)
+        response = self.client.query(**kwargs)
+        return response if fields is None else DynamoDBClient.slice(response.items(), fields)
+
+    def scan(self, **kwargs):
+        fields = kwargs.pop('Fields', None)
+        response = self.client.scan(**kwargs)
+        return response if fields is None else DynamoDBClient.slice(response.items(), fields)

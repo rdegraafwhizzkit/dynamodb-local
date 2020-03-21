@@ -2,3 +2,4 @@ venv*
 java/dynamodb
 .DS_Store
 .idea
+config.py

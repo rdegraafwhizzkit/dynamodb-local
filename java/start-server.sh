@@ -27,4 +27,5 @@ echo Now browse to http://localhost:8000/shell/
 java -cp "dynamodb-test-1.0-SNAPSHOT.jar:$(cat classpath)" \
   -Dsqlite4java.library.path="${HOME}/.m2/repository/com/almworks/sqlite4java/libsqlite4java-${ARCH}/1.0.392/" \
   LocalDynamoDBServer \
-  -inMemory
+  -inMemory \
+  -sharedDb

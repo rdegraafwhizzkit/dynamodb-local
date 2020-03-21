@@ -1,82 +1,97 @@
 import boto3
 from pprint import pprint as pp
-from helper import slice_dict
 import boto3_helper
 import random
+from config import config
 
 client = boto3.client(
     'dynamodb',
-    endpoint_url='http://localhost:8000'
+    endpoint_url=config['endpoint_url']
 )
 
 helper_client = boto3_helper.client(client)
 
 try:
 
-    print(helper_client.delete_table(
+    helper_client.delete_table(
         Check=True,
         TableName='test_2'
-    ))
+    )
 
     response = helper_client.create_table(
         Delete=True,
         Check=True,
         AttributeDefinitions=[{
-            'AttributeName': 'host',
+            'AttributeName': 'host_sk',
             'AttributeType': 'S'
         }, {
-            'AttributeName': 'timestamp',
+            'AttributeName': 'timestamp_pk',
             'AttributeType': 'N'
         }],
         TableName='test_2',
         KeySchema=[{
-            'AttributeName': 'timestamp',
+            'AttributeName': 'timestamp_pk',
             'KeyType': 'HASH'
         }, {
-            'AttributeName': 'host',
+            'AttributeName': 'host_sk',
             'KeyType': 'RANGE'
         }],
         ProvisionedThroughput={
-            'ReadCapacityUnits': 5,
-            'WriteCapacityUnits': 5
+            'ReadCapacityUnits': 25,
+            'WriteCapacityUnits': 25
         }
     )
-    pp(response['TableDescription'])
 except client.exceptions.ResourceInUseException as error:
     pp(error)
 
+hosts = {
+    0: 'mapy.cz',
+    1: 'who.int',
+    2: 'wikia.com',
+    3: 'over-blog.com',
+    4: 'phoca.cz'
+}
+
 i = 0
-while i < 10000:
-    response = client.put_item(
+while i < 50:
+    helper_client.put_item(
+        ExistsOK=False,
         TableName='test_2',
         Item={
-            'host': {'S': 'Hello!'},
-            'timestamp': {'N': str(i)},
+            'timestamp_pk': {'N': str(int(i / 5))},
+            'host_sk': {'S': hosts.get((i % 5))},
             'rx_bytes': {'N': str(random.randint(0, 1000))}
         },
-        ReturnConsumedCapacity='TOTAL'
+        ReturnConsumedCapacity='TOTAL',
+        ConditionExpression='attribute_not_exists(timestamp_pk)'
     )
     i = i + 1
-# pp(response['ConsumedCapacity'])
 
-response = client.scan(
+pp(helper_client.scan(
+    Fields=['ConsumedCapacity', 'Items', 'Count', 'ScannedCount'],
     TableName='test_2',
     ReturnConsumedCapacity='TOTAL'
-)
-pp(slice_dict(response.items(), ['ConsumedCapacity', 'Items']))
+))
 
-if False:
-    response = client.query(
-        TableName='test_2',
-        KeyConditions={
-            'host': {
-                'AttributeValueList': [
-                    {'S': 'Hello!'}
-                ],
-                'ComparisonOperator': 'EQ'
-                # 'EQ' |'NE'|'IN'|'LE'|'LT'|'GE'|'GT'|'BETWEEN'|'NOT_NULL'|'NULL'|'CONTAINS'|'NOT_CONTAINS'|'BEGINS_WITH'
-            }
+pp(helper_client.query(
+    Fields=['ScannedCount', 'Count', 'Items'],
+    TableName='test_2',
+    KeyConditions={
+        # 'host_sk': {
+        #     'AttributeValueList': [
+        #         {'S': 'who.int'}
+        #     ],
+        #     'ComparisonOperator': 'EQ'
+        # },
+        'timestamp_pk': {
+            'AttributeValueList': [
+                {'N': '2'},
+            ],
+            'ComparisonOperator': 'EQ'
         }
-    )
-
-    pp(slice_dict(response.items(), ['ConsumedCapacity', 'Items']))
+    },
+    FilterExpression='rx_bytes >= :rx_min',
+    ExpressionAttributeValues={
+        ':rx_min': {'N': '400'}
+    }
+))
