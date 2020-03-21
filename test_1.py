@@ -1,5 +1,6 @@
 import boto3
 from pprint import pprint as pp
+from helper import slice_dict
 
 client = boto3.client(
     'dynamodb',
@@ -12,7 +13,7 @@ try:
             'AttributeName': 'banaan',
             'AttributeType': 'S'  # |'N'|'B'
         }],
-        TableName='test',
+        TableName='test_1',
         KeySchema=[{
             'AttributeName': 'banaan',
             'KeyType': 'HASH'  # |'RANGE'
@@ -26,15 +27,11 @@ try:
 except client.exceptions.ResourceInUseException as error:
     pp(error)
 
-client.get_waiter('table_exists').wait(TableName='test')
+client.get_waiter('table_exists').wait(TableName='test_1')
 
 response = client.put_item(
-    TableName='test',
-    Item={
-        'banaan': {
-            'S': 'Hello!'
-        }
-    },
+    TableName='test_1',
+    Item={'banaan': {'S': 'Hello!'}},
     ReturnConsumedCapacity='TOTAL'
 )
 pp(response['ConsumedCapacity'])
@@ -43,8 +40,22 @@ response = client.list_tables()
 pp(response['TableNames'])
 
 response = client.scan(
-    TableName='test',
+    TableName='test_1',
     ReturnConsumedCapacity='TOTAL'
 )
-pp({k:v for k,v in response.items() if k in ['ConsumedCapacity','Items']})
+pp(slice_dict(response.items(), ['ConsumedCapacity', 'Items']))
 
+response = client.query(
+    TableName='test_1',
+    KeyConditions={
+        'banaan': {
+            'AttributeValueList': [
+                {'S': 'Hello!'}
+            ],
+            'ComparisonOperator': 'EQ'
+            # 'EQ' |'NE'|'IN'|'LE'|'LT'|'GE'|'GT'|'BETWEEN'|'NOT_NULL'|'NULL'|'CONTAINS'|'NOT_CONTAINS'|'BEGINS_WITH'
+        }
+    }
+)
+
+pp(slice_dict(response.items(), ['ConsumedCapacity', 'Items']))

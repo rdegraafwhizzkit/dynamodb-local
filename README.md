@@ -24,7 +24,7 @@ virtualenv -p python3 --no-site-packages venv-mac
 . venv-mac/bin/activate
 pip install --upgrade pip
 pip install -r requirements.txt
-python x.py
+python test_1.py
 ```
 
 ## References
