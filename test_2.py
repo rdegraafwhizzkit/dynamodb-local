@@ -4,6 +4,7 @@ import boto3_helper
 import random
 from config import config
 
+# https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/dynamodb.html#client
 client = boto3.client(
     'dynamodb',
     endpoint_url=config['endpoint_url']
@@ -13,11 +14,13 @@ helper_client = boto3_helper.client(client)
 
 try:
 
+    # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/dynamodb.html#DynamoDB.Client.delete_table
     helper_client.delete_table(
         Check=True,
         TableName='test_2'
     )
 
+    # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/dynamodb.html#DynamoDB.Client.create_table
     response = helper_client.create_table(
         Delete=True,
         Check=True,
@@ -54,6 +57,7 @@ hosts = {
 
 i = 0
 while i < 50:
+    # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/dynamodb.html#DynamoDB.Client.put_item
     helper_client.put_item(
         ExistsOK=False,
         TableName='test_2',
@@ -67,12 +71,14 @@ while i < 50:
     )
     i = i + 1
 
+# https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/dynamodb.html#DynamoDB.Client.scan
 pp(helper_client.scan(
     Fields=['ConsumedCapacity', 'Items', 'Count', 'ScannedCount'],
     TableName='test_2',
     ReturnConsumedCapacity='TOTAL'
 ))
 
+# https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/dynamodb.html#DynamoDB.Client.query
 pp(helper_client.query(
     Fields=['ScannedCount', 'Count', 'Items'],
     TableName='test_2',
@@ -92,6 +98,6 @@ pp(helper_client.query(
     },
     FilterExpression='rx_bytes >= :rx_min',
     ExpressionAttributeValues={
-        ':rx_min': {'N': '400'}
+        ':rx_min': {'N': '500'}
     }
 ))
