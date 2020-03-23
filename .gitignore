@@ -3,3 +3,4 @@ java/dynamodb
 .DS_Store
 .idea
 config.py
+__pycache__
