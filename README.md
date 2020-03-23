@@ -56,6 +56,8 @@ python test_3.py
 
 - https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/dynamodb.html
 - https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBLocal.html
+- https://github.com/git-for-windows/git/releases/download/v2.25.1.windows.1/PortableGit-2.25.1-64-bit.7z.exe
+- https://netcologne.dl.sourceforge.net/project/winpython/WinPython_3.7/3.7.6.0/Winpython64-3.7.6.0.exe
 
 ## Troubleshooting
 
