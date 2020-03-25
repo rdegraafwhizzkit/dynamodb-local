@@ -2,11 +2,14 @@ import boto3
 from pprint import pprint as pp
 from boto3_helper import DynamoDBClient
 from config import config
+import boto3_helper
 
 client = boto3.client(
     'dynamodb',
     endpoint_url=config['endpoint_url']
 )
+
+helper_client = boto3_helper.client(client)
 
 try:
     response = client.create_table(
@@ -40,11 +43,12 @@ pp(response['ConsumedCapacity'])
 response = client.list_tables()
 pp(response['TableNames'])
 
-response = client.scan(
+for response in helper_client.scan(
     TableName='test_1',
-    ReturnConsumedCapacity='TOTAL'
-)
-pp(DynamoDBClient.slice(response.items(), ['ConsumedCapacity', 'Items']))
+    ReturnConsumedCapacity='TOTAL',
+    Fields=['ConsumedCapacity', 'Items', 'Duration']
+):
+    pp(response)
 
 response = client.query(
     TableName='test_1',

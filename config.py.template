@@ -1,3 +1,7 @@
 config = {
-    'endpoint_url': 'http://localhost:8000'
+    'endpoint_url': 'http://localhost:8000',
+    'host': 'localhost',
+    'database': 'database',
+    'user': 'user',
+    'password': 'password'
 }

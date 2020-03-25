@@ -1,7 +1,6 @@
 import boto3
 from pprint import pprint as pp
 import boto3_helper
-import random
 from config import config
 import json
 
@@ -85,7 +84,7 @@ pp(helper_client.query(
     }
 ))
 
-pp(helper_client.scan(
+for response in helper_client.scan(
     Fields=['ScannedCount', 'Count', 'Items','ConsumedCapacity'],
     TableName='test_3',
     FilterExpression='begins_with(category, :category)',
@@ -93,4 +92,5 @@ pp(helper_client.scan(
         ':category': {'S': 'traffic#vehicles'}
     },
     ReturnConsumedCapacity='TOTAL'
-))
+):
+    pp(response)

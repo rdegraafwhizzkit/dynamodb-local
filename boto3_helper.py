@@ -1,4 +1,5 @@
 import re
+from time import time
 
 
 def is_instance(o: object, t: str):
@@ -61,5 +62,16 @@ class DynamoDBClient:
 
     def scan(self, **kwargs):
         fields = kwargs.pop('Fields', None)
-        response = self.client.scan(**kwargs)
-        return response if fields is None else DynamoDBClient.slice(response.items(), fields)
+        start = time()
+        response = None
+        while True:
+            response = self.client.scan(
+                **kwargs
+            ) if response is None else self.client.scan(
+                **kwargs,
+                ExclusiveStartKey=response['LastEvaluatedKey']
+            )
+            response['Duration'] = int(time() - start)
+            yield response if fields is None else DynamoDBClient.slice(response.items(), fields)
+            if 'LastEvaluatedKey' not in response:
+                break

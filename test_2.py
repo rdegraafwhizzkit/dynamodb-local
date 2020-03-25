@@ -72,11 +72,12 @@ while i < 50:
     i = i + 1
 
 # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/dynamodb.html#DynamoDB.Client.scan
-pp(helper_client.scan(
+for response in helper_client.scan(
     Fields=['ConsumedCapacity', 'Items', 'Count', 'ScannedCount'],
     TableName='test_2',
     ReturnConsumedCapacity='TOTAL'
-))
+):
+    pp(response)
 
 # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/dynamodb.html#DynamoDB.Client.query
 pp(helper_client.query(
