@@ -2,45 +2,7 @@ import boto3
 from config import config
 import boto3_helper
 from pprint import pprint as pp
-import threading
-import time
 
-# exitFlag = 0
-#
-#
-# class MyThread(threading.Thread):
-#     def __init__(self, thread_id, name, counter):
-#         threading.Thread.__init__(self)
-#         self.thread_id = thread_id
-#         self.name = name
-#         self.counter = counter
-#
-#     def run(self):
-#         print("Starting " + self.name)
-#         print_time(self.name, 5, self.counter)
-#         print("Exiting " + self.name)
-#
-#
-# def print_time(thread_name, counter, delay):
-#     while counter:
-#         if exitFlag:
-#             thread_name.exit()
-#         time.sleep(delay)
-#         print("%s: %s" % (thread_name, time.ctime(time.time())))
-#         counter -= 1
-#
-#
-# # Create new threads
-# thread1 = MyThread(1, "Thread-1", 1)
-# thread2 = MyThread(2, "Thread-2", 2)
-#
-# # Start new Threads
-# thread1.start()
-# thread2.start()
-#
-# print("Exiting Main Thread")
-#
-# exit(1)
 client = boto3.client(
     'dynamodb',
     endpoint_url=config['endpoint_url']
@@ -49,8 +11,12 @@ client = boto3.client(
 helper_client = boto3_helper.client(client)
 table_name = 'employees'
 
-# if True:
-if False:
+parameters = {
+    'reload': False,
+    'scan': False or True
+}
+
+if parameters['reload']:
     from mysql.connector import MySQLConnection
     import mysql
     from time import time
@@ -98,7 +64,7 @@ if False:
     from
       employees 
     limit
-      100000
+      10000
     '''
     cursor = connection.cursor()
     cursor.execute(sql_select_Query)
@@ -111,6 +77,7 @@ if False:
         batch_items.append(
             {
                 'PutRequest': {
+                    # Less fields in the item means less KB to scan/write so less RCU/WCU used
                     'Item': {
                         'emp_no': {'N': str(row[0])},
                         # 'birth_date': {'S': str(row[1])},
@@ -133,33 +100,30 @@ if False:
         count = count + len(batch_items)
 
     print(f'Wrote {count} records in {int(time() - start)} seconds')
-    # start = time()
 
-if False:
+if parameters['scan']:
     count = 0
     scanned_count = 0
+    duration = 0
     for response in helper_client.scan(
             Fields=[
                 'ScannedCount',
                 'Count',
                 'ConsumedCapacity',
-                # 'LastEvaluatedKey',
                 'Duration'
             ],
             TableName=table_name,
-            FilterExpression='begins_with(first_name, :first_name)',
-            # FilterExpression='first_name=:first_name',
-            ExpressionAttributeValues={
-                ':first_name': {'S': 'A'}
-                # ':first_name': {'S': 'Elzbieta'}
-            },
-            ReturnConsumedCapacity='TOTAL'
+            FilterExpression='begins_with(first_name, :first_name)',  # Does not make the scan cheaper
+            ExpressionAttributeValues={':first_name': {'S': 'A'}},
+            ReturnConsumedCapacity='TOTAL',
+            ConsistentRead=True  # Makes it twice as expensive
     ):
         count = count + response['Count']
         scanned_count = scanned_count + response['ScannedCount']
+        duration = response['Duration']
         pp(response)
 
-    # print(response['Duration'])
+    print(duration)
     print(count)
     print(scanned_count)
 
@@ -190,5 +154,6 @@ pp(helper_client.query(
         ':emp_no': {'N': '10001'},
         ':first_name': {'S': 'G'}
     },
-    ReturnConsumedCapacity='TOTAL'
+    ReturnConsumedCapacity='TOTAL',
+    ConsistentRead=True  # Makes it twice as expensive
 ))
