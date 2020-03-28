@@ -4,17 +4,19 @@ from mysql.connector import MySQLConnection
 from config import config
 import boto3_helper
 from batch_write_item import BatchWriteItem
-from pprint import pprint as pp
+from mysql_helper import resultset_iterator
 
+connection = mysql.connector.connect(
+    host=config['host'],
+    database=config['database'],
+    user=config['user'],
+    password=config['password']
+)
 
-def resultset_iterator(cursor, fetch_size=1000):
-    while True:
-        results = cursor.fetchmany(fetch_size)
-        if not results:
-            break
-        for result in results:
-            yield result
+sql_select_query = 'select emp_no, first_name from employees limit 1000000'
 
+cursor = connection.cursor()
+cursor.execute(sql_select_query)
 
 client = boto3.client(
     'dynamodb',
@@ -48,29 +50,19 @@ helper_client.create_table(
     }
 )
 
-connection = mysql.connector.connect(
-    host=config['host'],
-    database=config['database'],
-    user=config['user'],
-    password=config['password']
-)
-
-sql_select_query = 'select emp_no, first_name from employees limit 1000000'
-
-cursor = connection.cursor()
-cursor.execute(sql_select_query)
-
-duration = 0
-batch_items = []
-batch_size = 25  # Keep at max for AWS for optimal performance
-fetch_size = 5000
-count = 0
-threads = []
-capacity_units = 0
+batch_size = 25  # Keep at max (25) for AWS for optimal performance unless the items get too big (4k)
+fetch_size = 5000  # Fetch size does not seem to matter too much
 # nr_threads = 1  # 20 secs
 # nr_threads = 2  # 14 secs
 nr_threads = 4  # 11 secs
-for row in resultset_iterator(cursor, fetch_size):  # Batch size does not seem to matter too much
+
+count = 0
+duration = 0
+capacity_units = 0
+
+batch_items = []
+threads = []
+for row in resultset_iterator(cursor, fetch_size):
 
     batch_items.append({'PutRequest': {'Item': {
         'emp_no': {'N': str(row[0])},
@@ -89,7 +81,7 @@ for row in resultset_iterator(cursor, fetch_size):  # Batch size does not seem t
             thread.join()
             duration = duration + thread.response['Duration']
             count = count + thread.count
-            capacity_units = capacity_units + thread.response['ConsumedCapacity'][0]['CapacityUnits']
+            capacity_units = capacity_units + thread.capacity_units
 
         threads = []
 
@@ -103,6 +95,7 @@ for thread in threads:
     thread.join()
     duration = duration + thread.response['Duration']
     count = count + thread.count
+    capacity_units = capacity_units + thread.capacity_units
 
 print(f'Wrote {count} records in {duration / nr_threads} seconds: {int(count * nr_threads / duration)} records/second.')
 print(f'Used {capacity_units} capacity units')
