@@ -79,7 +79,11 @@ class DynamoDBClient:
                 break
 
     def batch_write_item(self, **kwargs):
-        self.client.batch_write_item(**kwargs)
+        fields = kwargs.pop('Fields', None)
+        start = time()
+        response = self.client.batch_write_item(**kwargs)
+        response['Duration'] = time() - start
+        return response if fields is None else DynamoDBClient.slice(response.items(), fields)
 
     def get_item(self, **kwargs):
         fields = kwargs.pop('Fields', None)
