@@ -5,6 +5,7 @@ from config import config
 import boto3_helper
 from batch_write_item import BatchWriteItem
 from mysql_helper import resultset_iterator
+from thread_helper import ThreadHelper
 
 connection = mysql.connector.connect(
     host=config['host'],
@@ -13,7 +14,7 @@ connection = mysql.connector.connect(
     password=config['password']
 )
 
-sql_select_query = 'select emp_no, first_name from employees limit 1000000'
+sql_select_query = 'select emp_no, first_name from employees limit 1000'
 
 cursor = connection.cursor()
 cursor.execute(sql_select_query)
@@ -56,12 +57,9 @@ fetch_size = 5000  # Fetch size does not seem to matter too much
 # nr_threads = 2  # 14 secs
 nr_threads = 4  # 11 secs
 
-count = 0
-duration = 0
-capacity_units = 0
+thread_helper = ThreadHelper(nr_threads)
 
 batch_items = []
-threads = []
 for row in resultset_iterator(cursor, fetch_size):
 
     batch_items.append({'PutRequest': {'Item': {
@@ -70,32 +68,14 @@ for row in resultset_iterator(cursor, fetch_size):
     }}})
 
     if len(batch_items) == batch_size:
-        threads.append(BatchWriteItem(helper_client, table_name, batch_items))
+        thread_helper.add(BatchWriteItem(helper_client, table_name, batch_items))
         batch_items = []
-
-    if len(threads) == nr_threads:
-        for thread in threads:
-            thread.start()
-
-        for thread in threads:
-            thread.join()
-            duration = duration + thread.response['Duration']
-            count = count + thread.count
-            capacity_units = capacity_units + thread.capacity_units
-
-        threads = []
+    thread_helper.try_start()
 
 if len(batch_items) > 0:
-    threads.append(BatchWriteItem(helper_client, table_name, batch_items))
+    thread_helper.add(BatchWriteItem(helper_client, table_name, batch_items))
+thread_helper.try_start()
 
-for thread in threads:
-    thread.start()
-
-for thread in threads:
-    thread.join()
-    duration = duration + thread.response['Duration']
-    count = count + thread.count
-    capacity_units = capacity_units + thread.capacity_units
-
-print(f'Wrote {count} records in {duration / nr_threads} seconds: {int(count * nr_threads / duration)} records/second.')
-print(f'Used {capacity_units} capacity units')
+print(f'Wrote {thread_helper.count} records in {thread_helper.duration / nr_threads} seconds')
+print(f'Performance was {int(thread_helper.count * nr_threads / thread_helper.duration)} records/second')
+print(f'Used {thread_helper.capacity_units} capacity units')
