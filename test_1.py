@@ -9,7 +9,10 @@ client = boto3.client(
     endpoint_url=config['endpoint_url']
 )
 
-helper_client = boto3_helper.client(client)
+helper_client = boto3_helper.client(
+    'dynamodb',
+    endpoint_url=config['endpoint_url']
+)
 
 try:
     response = client.create_table(

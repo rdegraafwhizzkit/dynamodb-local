@@ -9,7 +9,10 @@ client = boto3.client(
     endpoint_url=config['endpoint_url']
 )
 
-helper_client = boto3_helper.client(client)
+helper_client = boto3_helper.client(
+    'dynamodb',
+    endpoint_url=config['endpoint_url']
+)
 
 try:
 
@@ -85,12 +88,12 @@ pp(helper_client.query(
 ))
 
 for response in helper_client.scan(
-    Fields=['ScannedCount', 'Count', 'Items','ConsumedCapacity'],
-    TableName='test_3',
-    FilterExpression='begins_with(category, :category)',
-    ExpressionAttributeValues={
-        ':category': {'S': 'traffic#vehicles'}
-    },
-    ReturnConsumedCapacity='TOTAL'
+        Fields=['ScannedCount', 'Count', 'Items', 'ConsumedCapacity'],
+        TableName='test_3',
+        FilterExpression='begins_with(category, :category)',
+        ExpressionAttributeValues={
+            ':category': {'S': 'traffic#vehicles'}
+        },
+        ReturnConsumedCapacity='TOTAL'
 ):
     pp(response)

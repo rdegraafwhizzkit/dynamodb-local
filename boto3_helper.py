@@ -1,15 +1,24 @@
 import re
 from time import time
+import boto3
 
 
 def is_instance(o: object, t: str):
     return re.sub(r'^.*\'(.*)\'.*$', r'\1', str(type(o))) == t
 
 
-def client(botocore_client):
+# def client(botocore_client):
+#     if is_instance(botocore_client, 'botocore.client.DynamoDB'):
+#         return DynamoDBClient(botocore_client)
+#     raise Exception(f'{str(type(botocore_client))} is not supported')
+
+
+def client(*args, **kwargs):
+    botocore_client = boto3.client(*args, **kwargs)
     if is_instance(botocore_client, 'botocore.client.DynamoDB'):
         return DynamoDBClient(botocore_client)
-    raise Exception(f'{str(type(botocore_client))} is not supported')
+    print(f'{str(type(botocore_client))} is not supported')
+    return botocore_client
 
 
 class DynamoDBClient:

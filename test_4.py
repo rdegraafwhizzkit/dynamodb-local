@@ -1,14 +1,11 @@
-import boto3
 from config import config
 import boto3_helper
 from pprint import pprint as pp
 
-client = boto3.client(
+helper_client = boto3_helper.client(
     'dynamodb',
     endpoint_url=config['endpoint_url']
 )
-
-helper_client = boto3_helper.client(client)
 table_name = 'employees'
 
 parameters = {

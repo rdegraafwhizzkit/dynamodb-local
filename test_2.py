@@ -10,7 +10,10 @@ client = boto3.client(
     endpoint_url=config['endpoint_url']
 )
 
-helper_client = boto3_helper.client(client)
+helper_client = boto3_helper.client(
+    'dynamodb',
+    endpoint_url=config['endpoint_url']
+)
 
 try:
 
@@ -73,9 +76,9 @@ while i < 50:
 
 # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/dynamodb.html#DynamoDB.Client.scan
 for response in helper_client.scan(
-    Fields=['ConsumedCapacity', 'Items', 'Count', 'ScannedCount'],
-    TableName='test_2',
-    ReturnConsumedCapacity='TOTAL'
+        Fields=['ConsumedCapacity', 'Items', 'Count', 'ScannedCount'],
+        TableName='test_2',
+        ReturnConsumedCapacity='TOTAL'
 ):
     pp(response)
 
