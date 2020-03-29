@@ -4,11 +4,6 @@ import boto3_helper
 from config import config
 import json
 
-client = boto3.client(
-    'dynamodb',
-    endpoint_url=config['endpoint_url']
-)
-
 helper_client = boto3_helper.client(
     'dynamodb',
     endpoint_url=config['endpoint_url']
@@ -39,7 +34,7 @@ try:
             'WriteCapacityUnits': 25
         }
     )
-except client.exceptions.ResourceInUseException as error:
+except helper_client.client.exceptions.ResourceInUseException as error:
     pp(error)
 
 pattern = [

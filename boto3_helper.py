@@ -7,12 +7,7 @@ def is_instance(o: object, t: str):
     return re.sub(r'^.*\'(.*)\'.*$', r'\1', str(type(o))) == t
 
 
-# def client(botocore_client):
-#     if is_instance(botocore_client, 'botocore.client.DynamoDB'):
-#         return DynamoDBClient(botocore_client)
-#     raise Exception(f'{str(type(botocore_client))} is not supported')
-
-
+# https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/dynamodb.html#client
 def client(*args, **kwargs):
     botocore_client = boto3.client(*args, **kwargs)
     if is_instance(botocore_client, 'botocore.client.DynamoDB'):
@@ -37,6 +32,7 @@ class DynamoDBClient:
                 return True
         return False
 
+    # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/dynamodb.html#DynamoDB.Client.delete_table
     def delete_table(self, **kwargs):
         if not kwargs.pop('Check', False) or self.table_exists(TableName=kwargs['TableName']):
             response = self.client.delete_table(**kwargs)
@@ -46,6 +42,7 @@ class DynamoDBClient:
             'HTTPStatusCode': 404
         }
 
+    # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/dynamodb.html#DynamoDB.Client.create_table
     def create_table(self, **kwargs):
         if kwargs.pop('Delete', False):
             self.delete_table(
@@ -56,6 +53,7 @@ class DynamoDBClient:
         self.client.get_waiter('table_exists').wait(TableName=kwargs['TableName'])
         return response
 
+    # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/dynamodb.html#DynamoDB.Client.put_item
     def put_item(self, **kwargs):
         exists_ok = kwargs.pop('ExistsOK', False)
         try:
@@ -64,6 +62,7 @@ class DynamoDBClient:
             if not exists_ok:
                 raise e
 
+    # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/dynamodb.html#DynamoDB.Client.query
     def query(self, **kwargs):
         fields = kwargs.pop('Fields', None)
         start = time()
@@ -71,6 +70,7 @@ class DynamoDBClient:
         response['Duration'] = time() - start
         return response if fields is None else DynamoDBClient.slice(response.items(), fields)
 
+    # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/dynamodb.html#DynamoDB.Client.scan
     def scan(self, **kwargs):
         fields = kwargs.pop('Fields', None)
         start = time()
@@ -100,3 +100,9 @@ class DynamoDBClient:
         response = self.client.get_item(**kwargs)
         response['Duration'] = time() - start
         return response if fields is None else DynamoDBClient.slice(response.items(), fields)
+
+    def get_waiter(self, waiter_name):
+        return self.client.get_waiter(waiter_name)
+
+    def list_tables(self, **kwargs):
+        return self.client.list_tables(**kwargs)

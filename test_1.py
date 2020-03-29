@@ -1,13 +1,7 @@
-import boto3
 from pprint import pprint as pp
 from boto3_helper import DynamoDBClient
 from config import config
 import boto3_helper
-
-client = boto3.client(
-    'dynamodb',
-    endpoint_url=config['endpoint_url']
-)
 
 helper_client = boto3_helper.client(
     'dynamodb',
@@ -15,7 +9,7 @@ helper_client = boto3_helper.client(
 )
 
 try:
-    response = client.create_table(
+    response = helper_client.create_table(
         AttributeDefinitions=[{
             'AttributeName': 'banaan',
             'AttributeType': 'S'  # |'N'|'B'
@@ -31,29 +25,29 @@ try:
         }
     )
     pp(response['TableDescription'])
-except client.exceptions.ResourceInUseException as error:
+except helper_client.client.exceptions.ResourceInUseException as error:
     pp(error)
 
-client.get_waiter('table_exists').wait(TableName='test_1')
+helper_client.get_waiter('table_exists').wait(TableName='test_1')
 
-response = client.put_item(
+response = helper_client.put_item(
     TableName='test_1',
     Item={'banaan': {'S': 'Hello!'}},
     ReturnConsumedCapacity='TOTAL'
 )
 pp(response['ConsumedCapacity'])
 
-response = client.list_tables()
+response = helper_client.list_tables()
 pp(response['TableNames'])
 
 for response in helper_client.scan(
-    TableName='test_1',
-    ReturnConsumedCapacity='TOTAL',
-    Fields=['ConsumedCapacity', 'Items', 'Duration']
+        TableName='test_1',
+        ReturnConsumedCapacity='TOTAL',
+        Fields=['ConsumedCapacity', 'Items', 'Duration']
 ):
     pp(response)
 
-response = client.query(
+response = helper_client.query(
     TableName='test_1',
     KeyConditions={
         'banaan': {

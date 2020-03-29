@@ -1,14 +1,7 @@
-import boto3
 from pprint import pprint as pp
 import boto3_helper
 import random
 from config import config
-
-# https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/dynamodb.html#client
-client = boto3.client(
-    'dynamodb',
-    endpoint_url=config['endpoint_url']
-)
 
 helper_client = boto3_helper.client(
     'dynamodb',
@@ -17,13 +10,11 @@ helper_client = boto3_helper.client(
 
 try:
 
-    # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/dynamodb.html#DynamoDB.Client.delete_table
     helper_client.delete_table(
         Check=True,
         TableName='test_2'
     )
 
-    # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/dynamodb.html#DynamoDB.Client.create_table
     response = helper_client.create_table(
         Delete=True,
         Check=True,
@@ -47,7 +38,7 @@ try:
             'WriteCapacityUnits': 25
         }
     )
-except client.exceptions.ResourceInUseException as error:
+except helper_client.client.exceptions.ResourceInUseException as error:
     pp(error)
 
 hosts = {
@@ -60,7 +51,6 @@ hosts = {
 
 i = 0
 while i < 50:
-    # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/dynamodb.html#DynamoDB.Client.put_item
     helper_client.put_item(
         ExistsOK=False,
         TableName='test_2',
@@ -74,7 +64,6 @@ while i < 50:
     )
     i = i + 1
 
-# https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/dynamodb.html#DynamoDB.Client.scan
 for response in helper_client.scan(
         Fields=['ConsumedCapacity', 'Items', 'Count', 'ScannedCount'],
         TableName='test_2',
@@ -82,7 +71,6 @@ for response in helper_client.scan(
 ):
     pp(response)
 
-# https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/dynamodb.html#DynamoDB.Client.query
 pp(helper_client.query(
     Fields=['ScannedCount', 'Count', 'Items'],
     TableName='test_2',
