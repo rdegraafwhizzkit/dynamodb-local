@@ -18,13 +18,13 @@ sql_select_query = 'select emp_no, birth_date, first_name, last_name, gender, hi
 cursor = connection.cursor()
 cursor.execute(sql_select_query)
 
-helper_client = boto3_helper.client(
+dynamodb_client = boto3_helper.client(
     'dynamodb',
     endpoint_url=config['endpoint_url']
 )
 table_name = 'employees'
 
-helper_client.create_table(
+dynamodb_client.create_table(
     Delete=True,
     Check=True,
     TableName=table_name,
@@ -96,19 +96,19 @@ for row in resultset_iterator(cursor, fetch_size):
     }}})
 
     if len(batch_items) == batch_size:
-        thread_helper.add(BatchWriteItemThread(helper_client, table_name, batch_items))
+        thread_helper.add(BatchWriteItemThread(dynamodb_client, table_name, batch_items))
         batch_items = []
     thread_helper.try_start()
 
 if len(batch_items) > 0:
-    thread_helper.add(BatchWriteItemThread(helper_client, table_name, batch_items))
+    thread_helper.add(BatchWriteItemThread(dynamodb_client, table_name, batch_items))
 thread_helper.start()
 
 print(f'Wrote {thread_helper.count} records in {thread_helper.duration / nr_threads} seconds')
 print(f'Performance was {int(thread_helper.count * nr_threads / thread_helper.duration)} records/second')
 print(f'Used {thread_helper.capacity_units} capacity units')
 
-pp(helper_client.query(
+pp(dynamodb_client.query(
     Fields=['ScannedCount', 'Count', 'Items', 'Duration', 'ConsumedCapacity'],
     TableName=f'{table_name}',
     IndexName=f'{table_name}_idx1',

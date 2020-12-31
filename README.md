@@ -71,7 +71,24 @@ AWS Secret Access Key [None]: DummyAWSSecretAccessKey
 Default region name [None]: eu-west-1 
 Default output format [None]: json 
 ``` 
+or
+```
+mkdir -p ~/.aws && chmod 700 ~/.aws
 
+cat << 'EOF' > ~/.aws/config 
+[default]
+output = json
+region = eu-west-1
+EOF
+
+cat << 'EOF' > ~/.aws/credentials 
+[default]
+aws_access_key_id = DummyAWSAccessKeyID
+aws_secret_access_key = DummyAWSSecretAccessKey
+EOF
+
+chmod 400 ~/.aws/*
+```
 Although you are running locally, boto still needs to read (dummy) credentials.
 
 On Windows, you may also have to create an alias to python:
