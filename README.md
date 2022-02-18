@@ -11,6 +11,7 @@ Test code to get to know DynamoDB without having to run it on AWS
     * WinPython 3.7.6.0
 * Java JDK 1.8, tested with
   * Oracle 1.8.0_111 on macOS Mojave
+  * Oracle 1.8.0_311 on macOS Big Sur
   * OpenJDK 1.8.0_242 on Debian 9.11
   * Oracle 1.8.0_161 on Windows 10
 * Maven 3, tested with
@@ -37,10 +38,16 @@ alias python='winpty C:\Users\YOUR_USER_NAME\Desktop\Development\python-3.7.6.am
 python -m venv venv
 . venv/Scripts/activate
 ```
-On macOS and Linux:
+On Linux:
 ```
 virtualenv -p python3.7 --no-site-packages venv
 . venv/bin/activate
+pip install --upgrade pip
+```
+On macOS with Python 3 from Homebrew:
+```
+virtualenv -p python3 .venv
+. .venv/bin/activate
 pip install --upgrade pip
 ```
 Then
